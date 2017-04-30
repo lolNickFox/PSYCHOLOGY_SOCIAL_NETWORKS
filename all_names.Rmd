@@ -1,0 +1,50 @@
+---
+title: "name_list"
+author: "Nick_Fox"
+date: "4/30/2017"
+output: html_document
+---
+
+Here I will generate the names to use in the social network questionnaires.
+
+```{r echo = FALSE}
+
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(tidytext)
+
+#set working directory
+setwd("~/Dropbox/GitHub_master/data/PSYCHOLOGY_SOCIAL_NETWORKS")
+```
+
+
+```{r echo = FALSE}
+
+all_names <- read.csv("name_list.csv", header = TRUE)
+
+#create df with all present names (no absent)
+present_email <- all_names %>% 
+  filter(status_2017 != "absent") %>%
+  filter(status_2017 != "Absent") %>% 
+  filter(email != "")
+
+#filter to only keep entries that have a first name
+present_email_firstnames <- present_email %>% 
+  filter(first_name != "")
+
+
+```
+
+How the list has changed since 2010:
+```{r echo = FALSE}
+
+all_names %>% 
+  group_by(status_2017) %>% 
+  count(status_2017)
+
+```
+
+2281 researchers no longer listed on their departmental website.
+3097 new researchers on departmental websites.
+874 changed/updated email addresses.
