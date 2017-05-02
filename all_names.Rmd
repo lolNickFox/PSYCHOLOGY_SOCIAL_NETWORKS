@@ -7,20 +7,64 @@ output: html_document
 
 Here I will generate the names to use in the social network questionnaires.
 
-```{r echo = FALSE}
+```{r echo = FALSE, message = FALSE}
 
+#load packages
 library(dplyr)
 library(ggplot2)
 library(tidyr)
 library(tidytext)
+library(RColorBrewer)
 
 #set working directory
 setwd("~/Dropbox/GitHub_master/data/PSYCHOLOGY_SOCIAL_NETWORKS")
+
+fte_theme <- function() {
+      
+      # Generate the colors for the chart procedurally with RColorBrewer
+      palette <- brewer.pal("Greys", n=9)
+      color.background = palette[2]
+      color.grid.major = palette[3]
+      color.axis.text = palette[7]
+      color.axis.title = palette[7]
+      color.title = palette[8]
+      
+      # Begin construction of chart
+      theme_bw(base_size=9) +
+        
+      # Set the entire chart region to a light gray color
+      theme(panel.background=element_rect(fill=color.background, color=color.background)) +
+      theme(plot.background=element_rect(fill=color.background, color=color.background)) +
+      theme(panel.border=element_rect(color=color.background)) +
+      
+      # Format the grid
+      theme(panel.grid.major=element_line(color=color.grid.major,size=.25)) +
+      theme(panel.grid.minor=element_blank()) +
+      theme(axis.ticks=element_blank()) +
+      
+      # Format the legend, but hide by default
+      #theme(legend.position="none") +
+      theme(legend.background = element_rect(fill=color.background)) +
+      theme(legend.text = element_text(size=10,color=color.axis.title)) +
+      
+      # Set title and axis labels, and format these and tick marks
+      theme(plot.title=element_text(color=color.title, size=16, vjust=1.25)) +
+      theme(axis.text.x=element_text(size=10,color=color.axis.text)) +
+      theme(axis.text.y=element_text(size=10,color=color.axis.text)) +
+      theme(axis.title.x=element_text(size=12,color=color.axis.title, vjust=0.5)) +
+      theme(axis.title.y=element_text(size=12,color=color.axis.title, vjust=0.5)) +
+      
+      # Plot margins
+      theme(plot.margin = unit(c(0.35, 0.2, 0.3, 0.35), "cm"))
+    }
+
+#ggplot themes for figures to look a little more like 538 blog figures
 ```
 
 
 ```{r echo = FALSE}
 
+#read in the csv file
 all_names <- read.csv("name_list.csv", header = TRUE)
 
 #create df with all present names (no absent)
@@ -39,12 +83,89 @@ present_email_firstnames <- present_email %>%
 How the list has changed since 2010:
 ```{r echo = FALSE}
 
+#look at how the list has changed since being first collected in 2010
 all_names %>% 
   group_by(status_2017) %>% 
   count(status_2017)
 
 ```
 
-2281 researchers no longer listed on their departmental website.
-3097 new researchers on departmental websites.
-874 changed/updated email addresses.
+2281 researchers no longer listed on their departmental website. <br>
+3097 new researchers on departmental websites. <br>
+874 changed/updated email addresses. <br>
+----------------------
+<br>
+----------------------
+
+Choosing names - Based on previous research, want to choose names that account for ~ 0.1%-0.2% of the population.
+
+```{r echo = FALSE}
+#generate frequency for last names in the population
+present_lastname_freq <- present_email_firstnames %>% 
+  group_by(last_name) %>% 
+  summarise(n = n()) %>% 
+  mutate(freq_lastname = n / sum(n))
+
+#generate the list of names to use for "total known population"
+#previous literature suggests using names that represent 0.1%-0.2% of the population
+total_population_names <- present_lastname_freq %>% 
+  filter(freq_lastname < 0.002) %>% 
+  filter(freq_lastname > 0.00095) %>% 
+  arrange(desc(freq_lastname))
+
+print(total_population_names)
+
+total_population_names %>% 
+  ggplot(aes(x = reorder(last_name, freq_lastname), y = freq_lastname, fill = last_name)) + geom_bar(stat = "identity") + coord_cartesian(ylim = c(0.0005, 0.003)) + fte_theme() + labs(title="Last Names Accounting for 0.095% - 0.2%\nof All Psychologists", x="\nLast Name", y="Population Proportion\n") + geom_hline(yintercept=0.3, size=0.4, color="black") + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + guides(fill=FALSE)
+
+
+```
+
+----------------------
+----------------------
+<br>
+
+Next I want to compile Common, Uncommon, and Rare first names for the Game of Contacts
+
+```{r echo = FALSE}
+
+present_email_firstnames$first_name <- gsub(' [A-z ]*', '' , present_email_firstnames$first_name)
+
+
+present_firstname_freq <- present_email_firstnames %>% 
+  group_by(first_name) %>% 
+  summarise(n = n()) %>% 
+  mutate(freq_firstname = n / sum(n)) %>% 
+  arrange(desc(n))
+
+print(present_firstname_freq)
+
+```
+
+By roughly cutting the total list into thirds, I've generated categories that include roughly equal numbers of people.  They are unequal due to including all of the names at appear a certain amount of times (i.e, 5 people with the same name) in the same category.  If having 5 people with the same name is considered "common", then every name with 5 people should be in that category, not arbitrarily cut off between "common" and "uncommon"
+
+```{r echo = FALSE}
+#catogorize first names names as common/uncommon/rare 
+
+#generate the cumuluative frequency of names
+name_cat <- present_firstname_freq %>% 
+  mutate(cum_freq = cumsum(n))
+
+#roughly based on 1/3s, make cutoffs based on frequency of name
+name_cat <- name_cat %>% 
+  mutate(category = cut(n, breaks = c(0, 4, 23, Inf), labels = c("rare", "uncommon", "common")))
+
+#summarise how many total people are in each category
+name_cat %>%
+  group_by(category) %>% 
+  summarise(cat = sum(n))
+
+```
+
+For the Game of Contacts, I will need to select 24 names: <br>
+8 Common <br>
+8 Uncommon <br>
+8 Rare <br>
+
+From these, each should have 4 male names and 4 female names.
+
