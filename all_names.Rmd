@@ -167,5 +167,7 @@ For the Game of Contacts, I will need to select 24 names: <br>
 8 Uncommon <br>
 8 Rare <br>
 
-From these, each should have 4 male names and 4 female names.
+From these, each should have 4 male names and 4 female names. <br>
+
+((will I have to enter the gender data for all names??))
 
