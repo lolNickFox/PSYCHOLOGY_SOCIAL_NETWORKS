@@ -171,3 +171,13 @@ From these, each should have 4 male names and 4 female names. <br>
 
 ((will I have to enter the gender data for all names??))
 
+-----
+
+5/3/17
+
+-I think I need to go back and review the phone book method for the general population.
+
+-I have first names that I can use for Popularity Ratio and Game of Contacts (based on commonality)
+
+NEXT STEPS) Nail down the phone book method for general population and start making the questionnaire.
+
